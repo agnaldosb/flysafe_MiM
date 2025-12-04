@@ -1,4 +1,4 @@
-# Man in the Middle atack on Flysafe location system
+# Man in the Middle attack on Flysafe location system
 
 This repository contains the implementation of the Man in the Middle attack on FlySafe using the NS-3 network simulator.
 
