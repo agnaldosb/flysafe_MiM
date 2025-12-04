@@ -1,0 +1,46 @@
+# 1. Ignorar tudo por padrão
+*
+
+# 2. Manter arquivos importantes da raiz
+!.gitignore
+!README.md
+
+# 3. Exceções: Manter os diretórios e arquivos do seu projeto
+
+# Manter pasta ns-3.34
+!/ns-3.34/
+!/ns-3.34/wscript
+!/ns-3.34/run_flysafe.sh
+
+# Manter módulo flysafe dentro de src/
+!/ns-3.34/src/
+!/ns-3.34/src/flysafe/
+!/ns-3.34/src/flysafe/**
+
+# Manter os arquivos do core do ns-3 modificados
+!/ns-3.34/src/network/
+!/ns-3.34/src/network/wscript
+
+!/ns-3.34/src/network/model/
+!/ns-3.34/src/network/model/node.h
+!/ns-3.34/src/network/model/node.cc
+!/ns-3.34/src/network/model/packet.h
+!/ns-3.34/src/network/model/packet.cc
+!/ns-3.34/src/network/model/packet-tag-list.h
+!/ns-3.34/src/network/model/packet-tag-list.cc
+!/ns-3.34/src/network/model/tag-buffer.h
+!/ns-3.34/src/network/model/tag-buffer.cc
+!/ns-3.34/src/network/model/tag.h
+!/ns-3.34/src/network/model/tag.cc
+
+!/ns-3.34/src/wifi/
+!/ns-3.34/src/wifi/model/
+!/ns-3.34/src/wifi/model/wifi-remote-station-manager.cc
+
+# Manter seu script de simulação em scratch/
+!/ns-3.34/scratch/
+!/ns-3.34/scratch/flysafe.cc
+!/ns-3.34/scratch/drone_image.png
+!/ns-3.34/scratch/malicious_image.png
+!/ns-3.34/scratch/drone_icon.png
+!/ns-3.34/scratch/malicious_icon.png
