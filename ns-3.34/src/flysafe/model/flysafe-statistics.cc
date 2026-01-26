@@ -421,6 +421,75 @@ void Statistics::ReceiverCallback(string path, double timeNow, Vector position,
   }
 }
 
+/**
+ * @author Vinicius - MiM
+ * @brief Statistics of FlySafePacketSink Application - Impact metrics (mitigation time)
+ * @date Jan 23, 2026
+ */
+void Statistics::ImpactMitigationCallback(string path, double timeNow,
+                     Ipv4Address recvAdd,
+                     Ipv4Address fromAdd, int msgTag,
+                     double messageTime,
+                     double decryptTime,
+                     double mitigationTime,
+                     uint8_t discarded)
+{
+  ostringstream fileName;
+  stringstream headerLine;
+  ostringstream textLine;
+
+  std::string message;
+  switch (msgTag) {
+  case 0:
+    message = "Hello";
+    break;
+  case 1:
+    message = "Identification";
+    break;
+  case 2:
+    message = "Trap";
+    break;
+  case 3:
+    message = "Special Identification";
+    break;
+  case 4:
+    message = "Suspect neighbor";
+    break;
+  case 5:
+    message = "Blocked neighbor";
+    break;
+  case 6:
+    message = "Suspection reduction";
+    break;
+  default:
+    message = "Unknown";
+    break;
+  }
+
+  fileName << m_folderToTraces.c_str() << "impact_metrics_received_" << recvAdd
+       << ".txt";
+
+  headerLine << "time(s)" << "\t"
+       << "IPTx" << "\t"
+       << "msgTag" << "\t"
+       << "message" << "\t"
+       << "msgTime(s)" << "\t"
+      << "decryptTime(µs)" << "\t"
+       << "mitigationTime(µs)" << "\t"
+       << "discarded" << endl;
+  AppendHeaderToFile(m_impactFile, fileName.str(), headerLine.str());
+
+    textLine << timeNow << "\t" 
+            << fromAdd << "\t" 
+            << msgTag << "\t"
+            << message.c_str() << "\t" 
+            << messageTime << "\t" 
+          << decryptTime << "\t" 
+            << mitigationTime << "\t" 
+            << (int)discarded << endl;
+  AppendLineToFile(m_impactFile, fileName.str(), textLine.str());
+}
+
 
 /**
  * @brief Statistics of FlySafeOnOff Application - Sending messages (broadcast)
@@ -434,11 +503,16 @@ void Statistics::ReceiverCallback(string path, double timeNow, Vector position,
  */
 void Statistics::SenderCallback(string path, double timeNow, Ipv4Address senderIP,
                                 Ipv4Address targetIP, int msgTag, string message,
-                                Vector position, vector<ns3::MyTag::NeighborFull> neighList) 
+                                Vector position, vector<ns3::MyTag::NeighborFull> neighList,
+                                const FlySafeCryptoMetrics &metrics) 
 {
   ostringstream fileName;
   ostringstream headerLine;
   ostringstream textLine;
+
+
+  const double messageTime = metrics.messageTime;
+  const double encryptTime = metrics.encryptTimeUs;
 
 
   m_totalMsgSent++;
@@ -476,13 +550,15 @@ void Statistics::SenderCallback(string path, double timeNow, Ipv4Address senderI
   // *** Saving sent messages to one file ***
 
   // Append header line to file
-  headerLine << "time" << "\t" << "IPTx" << "\t" << "IPRx" 
-      << "\t" << "msgTag" << "\t" << "message" << endl;
+    headerLine << "time" << "\t" << "IPTx" << "\t" << "IPRx" 
+      << "\t" << "msgTag" << "\t" << "message" << "\t" << "msgTime(s)"
+      << "\t" << "encryptTime(µs)" << endl;
   AppendHeaderToFile(m_sentFile, m_sentTracesFile.c_str(), headerLine.str());
 
   // Save all messages sent in only one file
   textLine << timeNow << "\t" << senderIP << "\t" << targetIP 
-      << "\t" << msgTag << "\t" << message.c_str() << endl;
+      << "\t" << msgTag << "\t" << message.c_str()
+      << "\t" << messageTime << "\t" << encryptTime << endl;
   AppendLineToFile(m_sentFile, m_sentTracesFile.c_str(), textLine.str());
 
 
@@ -495,13 +571,14 @@ void Statistics::SenderCallback(string path, double timeNow, Ipv4Address senderI
   // append header line to file
   headerLine.str("");
   headerLine << "time" << "\t" << "targetIP" << "\t" 
-             << "msgTag" << "\t" << "message" << endl;
+             << "msgTag" << "\t" << "message" << "\t" << "msgTime(s)"
+             << "\t" << "encryptTime(µs)" << endl;
   AppendHeaderToFile(m_sentNodeFile, fileName.str(), headerLine.str());           
 
   // Save received messages individually by IP address
   textLine.str("");
   textLine << timeNow << "\t" << targetIP << "\t" << msgTag << "\t"
-           << message.c_str() << endl;
+           << message.c_str() << "\t" << messageTime << "\t" << encryptTime << endl;
   AppendLineToFile(m_sentNodeFile, fileName.str(), textLine.str());
 
 

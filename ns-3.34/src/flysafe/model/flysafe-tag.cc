@@ -3,6 +3,7 @@
 #include <iomanip> 
 #include <sstream> 
 #include <cstring>
+#include <chrono>
 
 /* ========================================================================
  * MyTag class
@@ -83,6 +84,9 @@ uint32_t MyTag::GetSerializedSize(const std::string& key, const std::string& non
 void MyTag::Serialize (TagBuffer i) const
 {	
 
+    // Vinicius - MiM - Jan 26, 2026 - Not encrypted path
+    m_lastEncryptTimeUs = 0.0;
+
     i.WriteU8(MY_TAG_MAGIC); // Vinicius - MiM - Nov 19, 2025 - Identify a encrypted data
 
 	i.WriteU8(m_simpleValue); // Store tag value first
@@ -159,12 +163,18 @@ void MyTag::Serialize(TagBuffer i, const std::string& key, const std::string& no
     unsigned long long encryptedActualLen = 0;
 
     // Encrypt
+    const auto encryptStartCpu = std::chrono::steady_clock::now();
     int res = crypto_aead_encrypt(encryptedBuffer, &encryptedActualLen,
                         clearBuffer, clearSize,
                         NULL, 0, // associated data is null
 						NULL, // nsec
                         (const unsigned char*)nonce.c_str(),
                         (const unsigned char*)key.c_str());
+    const auto encryptEndCpu = std::chrono::steady_clock::now();
+
+    const auto encryptCpuNs = std::chrono::duration_cast<std::chrono::nanoseconds>(
+        encryptEndCpu - encryptStartCpu);
+    m_lastEncryptTimeUs = static_cast<double>(encryptCpuNs.count()) / 1000.0;
 
     if (res != 0) {
         std::cout << "MyTag::Serialize (Encryption): Encryption FAILED! res=" << res << std::endl;
@@ -198,6 +208,9 @@ void MyTag::Serialize(TagBuffer i, const std::string& key, const std::string& no
  */
 void MyTag::Deserialize (TagBuffer i)
 {
+    // Vinicius - MiM - Jan 26, 2026 - Not encrypted path
+    m_lastDecryptTimeUs = 0.0;
+
     uint8_t magic = i.ReadU8();
     if (magic != MY_TAG_MAGIC) {
         // If the byte does not match, the data is encrypted or corrupted
@@ -310,14 +323,22 @@ bool MyTag::Deserialize(TagBuffer i, const std::string& key, const std::string& 
     unsigned long long decryptedActualLen = 0;
 
     // Decrypt
+    const auto decryptStartCpu = std::chrono::steady_clock::now();
     int ret = crypto_aead_decrypt(decryptedBuffer, &decryptedActualLen,
                                 NULL, // nsec
                                 encryptedBuffer, encryptedSize,
                                 NULL, 0, // 'ad'
                                 (const unsigned char*)nonce.c_str(),
                                 (const unsigned char*)key.c_str());
+    const auto decryptEndCpu = std::chrono::steady_clock::now();
+
+    const auto decryptCpuNs = std::chrono::duration_cast<std::chrono::nanoseconds>(
+        decryptEndCpu - decryptStartCpu);
+    const double decryptTimeUs = static_cast<double>(decryptCpuNs.count()) / 1000.0;
+    m_lastDecryptTimeUs = decryptTimeUs;
 
     if (ret != 0) {
+        m_lastDecryptTimeUs = 0.0;
         delete[] decryptedBuffer;
         return false;
     }
@@ -327,6 +348,9 @@ bool MyTag::Deserialize(TagBuffer i, const std::string& key, const std::string& 
     // Deserialize the clear data
     TagBuffer clearBuffer(decryptedBuffer, decryptedBuffer + decryptedActualLen);
     Deserialize(clearBuffer); // Call the original deserialization
+
+    // Preserve decryption timing (the clear-path Deserialize resets it).
+    m_lastDecryptTimeUs = decryptTimeUs;
 
     delete[] decryptedBuffer;
     return true;

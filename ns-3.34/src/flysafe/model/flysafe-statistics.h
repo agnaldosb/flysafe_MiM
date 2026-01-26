@@ -48,7 +48,13 @@ public:
 
   void SenderCallback(string path, double timeNow, Ipv4Address senderAdd, 
                       Ipv4Address targetAdd, int msgTag, string message,
-                      Vector position, vector<ns3::MyTag::NeighborFull> neighList);
+                      Vector position, vector<ns3::MyTag::NeighborFull> neighList,
+                      const FlySafeCryptoMetrics &metrics);
+
+  // Vinicius - MiM - Jan 23, 2026 - Impact metric: mitigation time
+  void ImpactMitigationCallback(string path, double timeNow,Ipv4Address recvAdd, Ipv4Address fromAdd,
+                              int msgTag, double messageTime, double decryptTime, double mitigationTime,
+                              uint8_t discarded);
 
   // Vinicius - MiM - Jul 16, 2025 - Callback for packet sniffer
   void SnifferCallback(string path, double timeNow, Vector senderPosition, 
@@ -305,6 +311,8 @@ public:
   ofstream m_neighAnalysisFile;           //!< Store stream for neighborhood analysis traces file
   ofstream m_neighAnalysisGnuplotFile;    //!< Store stream for neighborhood analysis Gnuplot traces file
   ofstream m_maliciousFile;               //!< Store stream for malicious neighborhood evolution traces file
+  ofstream m_impactFile;                  //!< Store stream for mitigation impact metrics traces file - Vinicius - MiM - Jan 23, 2026
+
   /** 
    * @author Vinicius - MiM
    * @note Reason for comment: Malicious UAV Implementation - Used for injection of fake data

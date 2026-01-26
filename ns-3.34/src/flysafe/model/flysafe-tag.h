@@ -29,6 +29,10 @@ public:
   virtual void Serialize(TagBuffer i, const std::string& key, const std::string& nonce) const;
   virtual bool Deserialize(TagBuffer i, const std::string& key, const std::string& nonce);
 
+  // Vinicius - MiM - Jan 26, 2026 - Processing time metrics (CPU time in microseconds)
+  double GetLastEncryptTimeUs() const { return m_lastEncryptTimeUs; }
+  double GetLastDecryptTimeUs() const { return m_lastDecryptTimeUs; }
+
   //These are custom accessor
 	Vector GetPosition(void);                     //!< Get nodes position
 	void SetPosition (Vector pos);                //!< Set nodes position
@@ -93,6 +97,10 @@ private:
   double m_messageTime;                   //!< Store message sent time
   // Vinicius - MiM - Nov 13, 2025
   std::string m_publicKey;                //!< Public key
+
+  // Vinicius - MiM - Jan 26, 2026 - Store last measured crypto processing times
+  mutable double m_lastEncryptTimeUs {0.0};
+  mutable double m_lastDecryptTimeUs {0.0};
 };
 } // namespace ns3
 

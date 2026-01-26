@@ -41,6 +41,19 @@ using namespace std;
 namespace ns3 {
 
 /**
+ * @author Vinicius - MiM
+ * @brief Extra timing/crypto metrics carried in trace callbacks.
+ *
+ * This struct exists to keep FlySafe trace callbacks under the ns-3
+ * Callback argument limit, while preserving the original parameters.
+ */
+struct FlySafeCryptoMetrics
+{
+    double messageTime {0.0};     //!< Timestamp embedded in the message/tag (s)
+    double encryptTimeUs {0.0};   //!< Crypto encryption CPU time (us)
+};
+
+/**
  * @brief Create simulation scenario file
  * @date Mar 20, 2023
  *

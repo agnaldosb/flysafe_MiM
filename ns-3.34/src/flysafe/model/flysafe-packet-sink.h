@@ -212,7 +212,11 @@ private:
   TracedCallback<double, Vector, Ipv4Address, Ipv4Address, int, string, std::vector<ns3::MyTag::NeighborFull>, 
       double> m_sinkTrace;   //!< Traced Callback: received messages 
       //double, std::vector<ns3::MyTag::MaliciousNode>> m_sinkTrace;   //!< Traced Callback: received messages 
-  TracedCallback <double, Ipv4Address, Ipv4Address, int, string, Vector,std::vector<ns3::MyTag::NeighborFull>> 
+  // Vinicius - MiM - Jan 23, 2026 - Trace source for mitigation impact
+  TracedCallback<double, Ipv4Address, Ipv4Address, int, double, double, double, uint8_t>
+      m_mitigationTrace; //!< Traced Callback: impact metrics
+  TracedCallback <double, Ipv4Address, Ipv4Address, int, string, Vector,
+                   std::vector<ns3::MyTag::NeighborFull>, const FlySafeCryptoMetrics &>
       m_txTrace;              //!< Traced value to sent messages
   /** 
    * @author Vinicius - MiM

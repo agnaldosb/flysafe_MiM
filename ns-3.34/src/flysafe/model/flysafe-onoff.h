@@ -303,7 +303,9 @@ private:
   /// Callback for tracing the packet Tx events, includes source, destination, the packet sent, and header
   TracedCallback<Ptr<const Packet>, const Address &, const Address &, const SeqTsSizeHeader &> 
       m_txTraceWithSeqTsSize;
-  TracedCallback <double, Ipv4Address, Ipv4Address, int, string, Vector,std::vector<ns3::MyTag::NeighborFull>>
+  // Vinicius - MiM - Jan 26, 2025
+  TracedCallback <double, Ipv4Address, Ipv4Address, int, string, Vector,
+                 std::vector<ns3::MyTag::NeighborFull>, const FlySafeCryptoMetrics &>
       m_txTraceMessage; //!< Traced value to sent messages
   TracedCallback<double, Vector, Ipv4Address, Ipv4Address, int, string, std::vector<ns3::MyTag::NeighborFull>, double>
       m_stopTraces;            //!< Traced Callback: stopped nodes traces 

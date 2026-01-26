@@ -1,5 +1,6 @@
 #include "flysafe-packet-sink.h"
 #include <algorithm>
+#include <chrono>
 #include <cmath>
 
 namespace ns3 {
@@ -30,6 +31,11 @@ TypeId FlySafePacketSink::GetTypeId(void) {
                           "ns3::Packet::TwoAddressTracedCallback")
           .AddTraceSource("SinkTraces", "A message has been received",
                           MakeTraceSourceAccessor(&FlySafePacketSink::m_sinkTrace),
+                          "ns3::FlySafePacketSink::TracedCallback")
+          // Vinicius - MiM - Jan 23, 2026 - Trace source for mitigation impact
+          .AddTraceSource("MitigationTraces",
+                          "Mitigation impact metrics for each received message",
+                          MakeTraceSourceAccessor(&FlySafePacketSink::m_mitigationTrace),
                           "ns3::FlySafePacketSink::TracedCallback")
           /** 
            * @author Vinicius - MiM
@@ -293,6 +299,9 @@ void FlySafePacketSink::PacketReceived(Ptr<Socket> socket) {
            continue; 
       }
 
+        // Vinicius - MiM - Jan 26, 2026 - Crypto processing time (decryption) measured in MyTag
+        const double decryptTimeUs = receivedTag.GetLastDecryptTimeUs();
+
       // Recover tag from packet and the information inside it
       //packet->PeekPacketTag(receivedTag); // Vinicius - MiM - Nov 18, 2025
       position = receivedTag.GetPosition();
@@ -412,13 +421,40 @@ void FlySafePacketSink::PacketReceived(Ptr<Socket> socket) {
       PrintMySupiciousList();
 
       // Vinicius - MiM - Nov 26, 2025 - Verify Anomaly
+      const uint8_t msgTag = receivedTag.GetSimpleValue();
+      const double messageTime = receivedTag.GetMessageTime();
+
+      uint8_t discarded = 0;
+      double mitigationTime = 0.0;
       if (m_mitigation) {
-        if (CheckAnomaly(receivedTag.GetSimpleValue(),neighIP, position, receivedTag.GetMessageTime(), value, timeNow)) {
-          std::cout << m_nodeIP << " : " << timeNow << " FlySafePacketSink - [SEC] Packet from " << neighIP 
-                      << " discarded due to behavioral anomaly." << std::endl << std::endl;
-            delete[] buffer;
-            continue; 
+        const auto mitigationStartCpu = std::chrono::steady_clock::now();
+        const bool anomalyDetected =
+            CheckAnomaly(msgTag, neighIP, position, messageTime, value, timeNow);
+        const auto mitigationEndCpu = std::chrono::steady_clock::now();
+
+        // Keep the same single mitigationTime field/column, but measure using CPU time.
+        // Expressed in microseconds (can be fractional).
+        const auto mitigationCpuNs = std::chrono::duration_cast<std::chrono::nanoseconds>(
+            mitigationEndCpu - mitigationStartCpu);
+        mitigationTime = static_cast<double>(mitigationCpuNs.count()) / 1000.0;
+        discarded = anomalyDetected ? 1 : 0;
+
+        // Log impact metrics for both passed and discarded messages
+          m_mitigationTrace(timeNow, m_nodeIP, neighIP, (int)msgTag, messageTime,
+            decryptTimeUs, mitigationTime, discarded);
+
+        if (anomalyDetected) {
+          std::cout << m_nodeIP << " : " << timeNow
+                    << " FlySafePacketSink - [SEC] Packet from " << neighIP
+                    << " discarded due to behavioral anomaly." << std::endl
+                    << std::endl;
+          delete[] buffer;
+          continue;
         }
+      } else {
+        // Mitigation disabled: still log for completeness (mitigationTime=0, discarded=0)
+        m_mitigationTrace(timeNow, m_nodeIP, neighIP, (int)msgTag, messageTime,
+                          decryptTimeUs, mitigationTime, discarded);
       }
 
       // Decrease the number of neighbors in NL due to a previous register during malicious nodes analsys 
@@ -471,7 +507,12 @@ void FlySafePacketSink::PacketReceived(Ptr<Socket> socket) {
           SendMessage(neighIPPort,"hello!", 1, (uint32_t) nNeigh, nodePosition, nodeInfosVectorTag); // Sent identification
           
           neighListFull = GetNeighborIpListFull();
-          m_txTrace(timeNow, m_nodeIP,neighIP,1,"Identification", position, neighListFull); // Callback for id message sent
+          // Vinicius - MiM - Jan 26, 2025
+          FlySafeCryptoMetrics identificationMetrics;
+          identificationMetrics.messageTime = timeNow;
+          identificationMetrics.encryptTimeUs = 0.0;
+          m_txTrace(timeNow, m_nodeIP, neighIP, 1, "Identification", position, neighListFull,
+                    identificationMetrics); // Callback for id message sent
 
 
           /** 

@@ -445,6 +445,19 @@ void FlySafeSimulation(uint32_t nNodes, string simDate, char runMode, int nMalic
                     MakeCallback(&Statistics::ReceiverCallback, &statistics));
   }
 
+  // Vinicius - MiM - Jan 23, 2026
+  // Callback Trace to Collect impact metrics
+  // Installed in all nodes
+  for (it = Nodes.Begin(); it != Nodes.End(); it++) {
+    uint32_t nodeID = (*it)->GetId();
+    ostringstream paramTest;
+    paramTest << "/NodeList/" << (nodeID)
+              << "/ApplicationList/*/$ns3::FlySafePacketSink/MitigationTraces";
+    Config::Connect(
+        paramTest.str().c_str(),
+        MakeCallback(&Statistics::ImpactMitigationCallback, &statistics));
+  }
+
   /** 
    * @author Vinicius - MiM
    * @note Reason for comment: Malicious UAV Implementation - Used for injection of fake data

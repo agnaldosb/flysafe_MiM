@@ -648,7 +648,12 @@ void FlySafeOnOff::SendPacket ()
           m_txTraceWithAddresses(packet, localAddress, receiverAddress);
         }
         neighListFull = GetNeighborIpListFull();
-        m_txTraceMessage(timeNow, m_nodeIP, m_nodeIP.GetBroadcast(), 0, "Hello", position, neighListFull); // Callback to trace messages sent
+        // Vinicius - MiM - Jan 26, 2025
+        FlySafeCryptoMetrics helloMetrics;
+        helloMetrics.messageTime = broadcastTag.GetMessageTime();
+        helloMetrics.encryptTimeUs = 0.0;
+        m_txTraceMessage(timeNow, m_nodeIP, m_nodeIP.GetBroadcast(), 0, "Hello", position, neighListFull,
+                         helloMetrics); // Callback to trace messages sent
         /** 
          * @author Vinicius - MiM
          * @note Reason for comment: Malicious UAV Implementation - Used for injection of fake data
@@ -812,8 +817,13 @@ void FlySafeOnOff::notifyNewPosition(Vector position){
 
       SendMessage(neighIPPort,"Special identification",3, (uint32_t) ThisNode->GetNNeighbors(), position, neighInfosVectorTag);
 
+      // Vinicius - MiM - Jan 26, 2025
       // Callback to trace messages sent
-      m_txTraceMessage(timeNow, m_nodeIP, neighborList[i], 3, "Special identification", position, neighListFull);
+      FlySafeCryptoMetrics specialIdentificationMetrics;
+      specialIdentificationMetrics.messageTime = timeNow;
+      specialIdentificationMetrics.encryptTimeUs = 0.0;
+      m_txTraceMessage(timeNow, m_nodeIP, neighborList[i], 3, "Special identification", position, neighListFull,
+                       specialIdentificationMetrics);
     }
 
     // Send trap messages to one hop neighbors only
@@ -874,7 +884,12 @@ void FlySafeOnOff::notifyNewPosition(Vector position){
       socket->Send(packet); // Send packet
       socket->Close();  // Close socket
 
-      m_txTraceMessage(timeNow, m_nodeIP, neighborList[i], 2, "Trap", position, neighListFull); // Callback to messages sent
+      // Vinicius - MiM - Jan 26, 2025
+      FlySafeCryptoMetrics trapMetrics;
+      trapMetrics.messageTime = tag.GetMessageTime();
+      trapMetrics.encryptTimeUs = tag.GetLastEncryptTimeUs();
+      m_txTraceMessage(timeNow, m_nodeIP, neighborList[i], 2, "Trap", position, neighListFull,
+                       trapMetrics); // Callback to messages sent
       
       if((int)ThisNode->GetNeighborQuality(neighborList[i]) == 1){ // No answer form neigh node in last round
         //register node data as empty list
@@ -922,7 +937,11 @@ void FlySafeOnOff::notifyNewPosition(Vector position){
       socket->Send(packet); 
       socket->Close();
 
-      m_txTraceMessage(timeNow, m_nodeIP, ip, 2, "Trap", position, neighListFull); 
+      // Vinicius - MiM - Jan 26, 2025
+      FlySafeCryptoMetrics handshakeTrapMetrics;
+      handshakeTrapMetrics.messageTime = tag.GetMessageTime();
+      handshakeTrapMetrics.encryptTimeUs = tag.GetLastEncryptTimeUs();
+      m_txTraceMessage(timeNow, m_nodeIP, ip, 2, "Trap", position, neighListFull, handshakeTrapMetrics);
     }
 
   }
