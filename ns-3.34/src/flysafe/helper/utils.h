@@ -1,3 +1,6 @@
+#ifndef NS3_FLYSAFE_HELPER_UTILS_H
+#define NS3_FLYSAFE_HELPER_UTILS_H
+
 #include <algorithm>
 #include <chrono>
 #include <cstdlib>
@@ -226,3 +229,5 @@ GenerateAsymmetricKeys(uint32_t nNodes);
 
 void Create2DPlotFile ();
 }
+
+#endif /* NS3_FLYSAFE_HELPER_UTILS_H */

@@ -440,8 +440,9 @@ void FlySafePacketSink::PacketReceived(Ptr<Socket> socket) {
         discarded = anomalyDetected ? 1 : 0;
 
         // Log impact metrics for both passed and discarded messages
-          m_mitigationTrace(timeNow, m_nodeIP, neighIP, (int)msgTag, messageTime,
-            decryptTimeUs, mitigationTime, discarded);
+        Vector packedTimes(messageTime, decryptTimeUs, mitigationTime);
+        m_mitigationTrace(timeNow, m_nodeIP, neighIP, (int)msgTag, packedTimes,
+                          discarded, position);
 
         if (anomalyDetected) {
           std::cout << m_nodeIP << " : " << timeNow
@@ -453,8 +454,9 @@ void FlySafePacketSink::PacketReceived(Ptr<Socket> socket) {
         }
       } else {
         // Mitigation disabled: still log for completeness (mitigationTime=0, discarded=0)
-        m_mitigationTrace(timeNow, m_nodeIP, neighIP, (int)msgTag, messageTime,
-                          decryptTimeUs, mitigationTime, discarded);
+        Vector packedTimes(messageTime, decryptTimeUs, mitigationTime);
+        m_mitigationTrace(timeNow, m_nodeIP, neighIP, (int)msgTag, packedTimes,
+                          discarded, position);
       }
 
       // Decrease the number of neighbors in NL due to a previous register during malicious nodes analsys 

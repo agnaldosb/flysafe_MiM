@@ -51,10 +51,11 @@ public:
                       Vector position, vector<ns3::MyTag::NeighborFull> neighList,
                       const FlySafeCryptoMetrics &metrics);
 
-  // Vinicius - MiM - Jan 23, 2026 - Impact metric: mitigation time
-  void ImpactMitigationCallback(string path, double timeNow,Ipv4Address recvAdd, Ipv4Address fromAdd,
-                              int msgTag, double messageTime, double decryptTime, double mitigationTime,
-                              uint8_t discarded);
+       // Vinicius - MiM - Jan 23, 2026 - Impact metric: mitigation time
+       // packedTimes.x = msgTime(s), packedTimes.y = decryptTime(µs), packedTimes.z = mitigationTime(µs)
+       void ImpactMitigationCallback(string path, double timeNow, Ipv4Address recvAdd,
+                                                                                                                Ipv4Address fromAdd, int msgTag, Vector packedTimes,
+                                                                                                                uint8_t discarded, Vector reportedPos);
 
   // Vinicius - MiM - Jul 16, 2025 - Callback for packet sniffer
   void SnifferCallback(string path, double timeNow, Vector senderPosition, 

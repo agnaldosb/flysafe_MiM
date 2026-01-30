@@ -429,11 +429,14 @@ void Statistics::ReceiverCallback(string path, double timeNow, Vector position,
 void Statistics::ImpactMitigationCallback(string path, double timeNow,
                      Ipv4Address recvAdd,
                      Ipv4Address fromAdd, int msgTag,
-                     double messageTime,
-                     double decryptTime,
-                     double mitigationTime,
-                     uint8_t discarded)
+                     Vector packedTimes,
+                     uint8_t discarded,
+                     Vector reportedPos)
 {
+  const double messageTime = packedTimes.x;
+  const double decryptTime = packedTimes.y;
+  const double mitigationTime = packedTimes.z;
+
   ostringstream fileName;
   stringstream headerLine;
   ostringstream textLine;
@@ -476,7 +479,10 @@ void Statistics::ImpactMitigationCallback(string path, double timeNow,
        << "msgTime(s)" << "\t"
       << "decryptTime(µs)" << "\t"
        << "mitigationTime(µs)" << "\t"
-       << "discarded" << endl;
+      << "discarded" << "\t"
+      << "rxPosX" << "\t"
+      << "rxPosY" << "\t"
+      << "rxPosZ" << endl;
   AppendHeaderToFile(m_impactFile, fileName.str(), headerLine.str());
 
     textLine << timeNow << "\t" 
@@ -486,7 +492,10 @@ void Statistics::ImpactMitigationCallback(string path, double timeNow,
             << messageTime << "\t" 
           << decryptTime << "\t" 
             << mitigationTime << "\t" 
-            << (int)discarded << endl;
+            << (int)discarded << "\t"
+            << reportedPos.x << "\t"
+            << reportedPos.y << "\t"
+            << reportedPos.z << endl;
   AppendLineToFile(m_impactFile, fileName.str(), textLine.str());
 }
 

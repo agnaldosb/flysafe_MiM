@@ -213,7 +213,9 @@ private:
       double> m_sinkTrace;   //!< Traced Callback: received messages 
       //double, std::vector<ns3::MyTag::MaliciousNode>> m_sinkTrace;   //!< Traced Callback: received messages 
   // Vinicius - MiM - Jan 23, 2026 - Trace source for mitigation impact
-  TracedCallback<double, Ipv4Address, Ipv4Address, int, double, double, double, uint8_t>
+  // Note: pack msgTime/decryptTime/mitigationTime into a Vector to keep callback arity within ns-3 limits.
+  // packedTimes.x = msgTime(s), packedTimes.y = decryptTime(µs), packedTimes.z = mitigationTime(µs)
+  TracedCallback<double, Ipv4Address, Ipv4Address, int, Vector, uint8_t, Vector>
       m_mitigationTrace; //!< Traced Callback: impact metrics
   TracedCallback <double, Ipv4Address, Ipv4Address, int, string, Vector,
                    std::vector<ns3::MyTag::NeighborFull>, const FlySafeCryptoMetrics &>
