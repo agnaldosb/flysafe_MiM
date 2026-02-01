@@ -169,9 +169,9 @@ private:
    * @param distDiference
    * @param timeNow
    * 
-   * @return true if anomaly detected, false otherwise
+  * @return 0 if no anomaly is detected; otherwise a positive code identifying which anomaly check triggered.
    */
-  bool CheckAnomaly(uint8_t tagValue, Ipv4Address neighborIP, Vector reportedPos, double msgTime,  double distDiference, double timeNow);
+  uint8_t CheckAnomaly(uint8_t tagValue, Ipv4Address neighborIP, Vector reportedPos, double msgTime,  double distDiference, double timeNow);
 
 //}
 

@@ -479,7 +479,7 @@ void Statistics::ImpactMitigationCallback(string path, double timeNow,
        << "msgTime(s)" << "\t"
       << "decryptTime(µs)" << "\t"
        << "mitigationTime(µs)" << "\t"
-      << "discarded" << "\t"
+      << "discardCode" << "\t"
       << "rxPosX" << "\t"
       << "rxPosY" << "\t"
       << "rxPosZ" << endl;

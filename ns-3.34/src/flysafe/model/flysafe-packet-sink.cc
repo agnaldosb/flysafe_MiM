@@ -428,8 +428,8 @@ void FlySafePacketSink::PacketReceived(Ptr<Socket> socket) {
       double mitigationTime = 0.0;
       if (m_mitigation) {
         const auto mitigationStartCpu = std::chrono::steady_clock::now();
-        const bool anomalyDetected =
-            CheckAnomaly(msgTag, neighIP, position, messageTime, value, timeNow);
+        const uint8_t anomalyCode =
+          CheckAnomaly(msgTag, neighIP, position, messageTime, value, timeNow);
         const auto mitigationEndCpu = std::chrono::steady_clock::now();
 
         // Keep the same single mitigationTime field/column, but measure using CPU time.
@@ -437,17 +437,18 @@ void FlySafePacketSink::PacketReceived(Ptr<Socket> socket) {
         const auto mitigationCpuNs = std::chrono::duration_cast<std::chrono::nanoseconds>(
             mitigationEndCpu - mitigationStartCpu);
         mitigationTime = static_cast<double>(mitigationCpuNs.count()) / 1000.0;
-        discarded = anomalyDetected ? 1 : 0;
+        // 0 = no anomaly; 1..N = anomaly reason code (discard reason)
+        discarded = anomalyCode;
 
         // Log impact metrics for both passed and discarded messages
         Vector packedTimes(messageTime, decryptTimeUs, mitigationTime);
         m_mitigationTrace(timeNow, m_nodeIP, neighIP, (int)msgTag, packedTimes,
                           discarded, position);
 
-        if (anomalyDetected) {
+        if (anomalyCode != 0) {
           std::cout << m_nodeIP << " : " << timeNow
                     << " FlySafePacketSink - [SEC] Packet from " << neighIP
-                    << " discarded due to behavioral anomaly." << std::endl
+                    << " discarded due to behavioral anomaly (code=" << (int)anomalyCode << ")." << std::endl
                     << std::endl;
           delete[] buffer;
           continue;
@@ -1497,9 +1498,9 @@ vector<ns3::MyTag::NeighborFull> FlySafePacketSink::GetNeighborIpListFull() {
    * @param distDiference Distance between this node and the neighbor node
    * @param timeNow Current simulation time
    * 
-   * @return true if an anomaly is detected, false if no anomaly is detected
+   * @return 0 if no anomaly is detected; otherwise a positive code identifying which anomaly check triggered.
    */
-  bool FlySafePacketSink::CheckAnomaly(uint8_t tagValue,
+  uint8_t FlySafePacketSink::CheckAnomaly(uint8_t tagValue,
                      Ipv4Address neighborIP,
                      Vector reportedPos,
                      double msgTime,
@@ -1507,13 +1508,20 @@ vector<ns3::MyTag::NeighborFull> FlySafePacketSink::GetNeighborIpListFull() {
                      double timeNow) {
     Ptr<Node> ThisNode = this->GetNode();
 
-    // In defense mode, broadcast and identification messages do not contain position information
-    if (m_defense && (tagValue == 0 || tagValue == 1 || tagValue == 3) && reportedPos != Vector(0,0,0)) {
+    // In defense mode, broadcast (tag 0) and identification (tag 1 / 3) messages do not carry position.
+    // If position is zero, accept immediately and skip further checks.
+    // If position is non-zero, this is spoofing.
+    if (m_defense && (tagValue == 0 || tagValue == 1 || tagValue == 3)) {
+      if (reportedPos == Vector(0, 0, 0)) {
+        return 0;
+      }
+
       std::cout << m_nodeIP << " : " << timeNow
-            << " FlySafePacketSink - [SEC] Anomaly Detected (Spoofing): Node "
-            << neighborIP << " sent a message with tag " << (int)tagValue
-            << " in defense mode, but position information is present. | Reported position: " << reportedPos << std::endl;
-      return true;
+                << " FlySafePacketSink - [SEC] Anomaly Detected (Spoofing): Node "
+                << neighborIP << " sent a message with tag " << (int)tagValue
+                << " in defense mode, but position information is present. | Reported position: "
+                << reportedPos << std::endl;
+      return 1;
     }
     
     // Coverage Area
@@ -1524,12 +1532,12 @@ vector<ns3::MyTag::NeighborFull> FlySafePacketSink::GetNeighborIpListFull() {
               << neighborIP << " claims to be " << distDiference << "m away but node " << m_nodeIP
               << " received the packet, even though his coverage area is " << m_maxUavCoverage
               << " meters. | Reported position: " << reportedPos << std::endl;
-        return true;
+        return 2;
       }
     }
 
     if (!ThisNode->IsAlreadyNeighbor(neighborIP)) {
-      return false;
+      return 0;
     }
 
     double lastMsgTime = ThisNode->GetNeighborInfoTime(neighborIP);
@@ -1547,7 +1555,7 @@ vector<ns3::MyTag::NeighborFull> FlySafePacketSink::GetNeighborIpListFull() {
       std::cout << m_nodeIP << " : " << timeNow
             << " FlySafePacketSink - [SEC] Anomaly Detected (Outdated): Message time " 
             << msgTime << " is older than last accepted message " << lastMsgTime << std::endl;
-      return true;
+      return 3;
     }
 
     // Replay / Conflict (Same Timestamp)
@@ -1555,13 +1563,13 @@ vector<ns3::MyTag::NeighborFull> FlySafePacketSink::GetNeighborIpListFull() {
         if (oldPos == reportedPos) {
              std::cout << m_nodeIP << " : " << timeNow
             << " FlySafePacketSink - [SEC] Anomaly Detected (Replay): Duplicate message. Old position: " << oldPos << " - Reported position: " << reportedPos << "; Old timestamp: " << lastMsgTime << " - Reported timestamp: " << msgTime << std::endl;
-             return true;
+           return 4;
         } else {
              // Same time, different location -> Teleportation / Spoofing
              std::cout << m_nodeIP << " : " << timeNow
             << " FlySafePacketSink - [SEC] Anomaly Detected (Conflict): Two messages with same timestamp " 
             << msgTime << " but different locations. Old position: " << oldPos << " - Reported position: " << reportedPos << "; The distance between them: " << distTraveled << "m." << std::endl;
-             return true;
+           return 5;
         }
     }
 
@@ -1580,10 +1588,10 @@ vector<ns3::MyTag::NeighborFull> FlySafePacketSink::GetNeighborIpListFull() {
             << " | Old timestamp: " << lastMsgTime 
             << " | Reported timestamp: " << msgTime << ")" << std::endl;
     
-      return true;
+      return 6;
     }
 
-    return false;
+    return 0;
   }
 
 } // namespace ns3
