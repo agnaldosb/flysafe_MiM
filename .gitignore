@@ -15,6 +15,9 @@
 !/ns-3.34/src/flysafe/
 !/ns-3.34/src/flysafe/**
 
+!/ns-3.34/src/ascon-128/
+!/ns-3.34/src/ascon-128/**
+
 !/ns-3.34/src/network/
 !/ns-3.34/src/network/wscript
 
