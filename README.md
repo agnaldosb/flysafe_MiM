@@ -36,10 +36,13 @@ Follow the steps below to integrate the files from this repository into your NS-
 3.  **FlySafe Module:**
     *   Open the `ns-3.34/src/` folder of your NS-3 and add the entire `ns-3.34/src/flysafe/` folder from this repository.
 
-4.  **Network Models:**
+4.  **ASCON-128 Module:**
+    *   Open the `ns-3.34/src/` folder of your NS-3 and add the entire `ns-3.34/src/ascon-128/` folder from this repository.
+
+5.  **Network Models:**
     *   Open the `ns-3.34/src/network/model/` folder of your NS-3 and replace the existing files with the corresponding files found in this same folder of this repository.
 
-5.  **Wifi Models:**
+6.  **Wifi Models:**
     *   Open the `ns-3.34/src/wifi/model/` folder of your NS-3 and replace the existing files with the corresponding files found in this same folder of this repository.
 
 ## How to Run the Simulation
