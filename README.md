@@ -1,4 +1,15 @@
-# Man in the Middle attack on Flysafe location system
+<!--# Man in the Middle attack on Flysafe location system-->
+# An Opportunistic Key Exchange Scheme for Location Information Sharing on UAV Networks Resilient to MiM Attacks
+
+As unmanned aerial vehicles (UAVs) demand wireless technologies for their communication, they become prone to serious security threats that aim to compromise the integrity and confidentiality of the exchanged control data, standing out man-in-the-middle (MiM) attacks as one of the most damaging. Besides, UAV networks require essential critical services for their regular operation, like the UAV location service. Key exchange is one way to protect UAV communications against MiM attacks. This paper proposes KEYSUAV, a key exchange scheme to enable a resilient location information sharing on UAV networks against MiM attacks. KEYSUAV relies on opportunistic approaches and on the lightweight cryptographic standard ASCON, an algorithm designed for resource-constrained devices like UAVs. Simulation results show that KEYSUAV over the FlySafe system detected 100% of compromised messages sent by a MiM attacker with a slight reduction in UAVs’ spatial awareness, around 4.5%, thus fostering the resilience of the location service for UAV networks.
+
+```
+BATISTA, Agnaldo; TRINDADE, Vinicius; SANTOS, Aldri. An Opportunistic Key Exchange Scheme
+for Location Information Sharing on UAV Networks Resilient to MiM Attacks.
+In: SIMPÓSIO BRASILEIRO DE REDES DE COMPUTADORES E SISTEMAS DISTRIBUÍDOS (SBRC), 44. , 2026,
+Praia do Forte/BA. Anais [...]. Porto Alegre: Sociedade Brasileira de Computação, 2026 . p. 141-154. ISSN 2177-9384.
+DOI: https://doi.org/10.5753/sbrc.2026.19890. 
+```
 
 This repository contains the implementation of the Man in the Middle attack on FlySafe using the NS-3 network simulator.
 
